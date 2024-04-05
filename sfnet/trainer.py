@@ -95,6 +95,9 @@ class SFNet(BasicTrainer):
 
             for epoch in tqdm.tqdm(range(self.args.st_epoch_num), desc=f'Task {i} ### teacher self-training', leave=False):
                 cur_teacher_train_examples = list(self.task_controller.task_list[i]["train"])
+                if self.args.teacher_cl:
+                    cur_teacher_train_examples.extend(memory_teacher_train)
+
                 with torch.no_grad():
                     cur_teacher_semi_examples = self.task_controller.get_semi_memory(self.task_controller.task_list[i]["semi"],
                                                                                      int(self.args.st_rate * len(teacher_train_examples)))

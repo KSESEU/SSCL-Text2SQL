@@ -70,7 +70,7 @@ class BasicTrainer(object):
         loss_lf = -score[1]
 
         if use_conf:
-            conf_tensor = torch.tensor([example.pseudo_conf for example in examples], dtype=torch.long)
+            conf_tensor = torch.tensor([example.pseudo_conf for example in examples], dtype=torch.float)
             if self.args.cuda:
                 conf_tensor = conf_tensor.to(self.device)
             loss_sketch *= conf_tensor
