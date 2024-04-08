@@ -78,14 +78,14 @@ class TaskController(object):
         memory_teacher_train, memory_teacher_semi = [], []
         for i in range(task_id):
             memory_student_train.extend(self.memory_list[i]["student"]["train"])
-            memory_student_train.extend(self.memory_list[i]["student"]["semi"] if use_semi else [])
+            memory_student_semi.extend(self.memory_list[i]["student"]["semi"] if use_semi else [])
 
             if self.args.teacher_sampling_name != "dual":
                 memory_teacher_train.extend(self.memory_list[i]["teacher"]["train"])
                 memory_teacher_semi.extend(self.memory_list[i]["teacher"]["semi"] if use_semi else [])
             else:
                 memory_teacher_train.extend(prompt_sampling(self.task_list[i]["train"],
-                                                            self.task_list[task_id]["semi"],
+                                                            self.task_list[task_id]["train"],
                                                             self.memory_size,
                                                             self.args))
                 memory_teacher_semi.extend(prompt_sampling(self.task_list[i]["semi"],

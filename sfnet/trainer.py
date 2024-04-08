@@ -63,12 +63,13 @@ class SFNet(BasicTrainer):
             teacher_train_examples = list(self.task_controller.task_list[i]["train"])
             if self.args.teacher_cl:
                 teacher_train_examples.extend(memory_teacher_train)
+            teacher_st_num = int(self.args.st_rate * len(teacher_train_examples))
 
             for epoch in tqdm.tqdm(range(self.args.warm_boot_epoch), desc=f'Task {i} ### teacher warm boot', leave=False):
                 cur_teacher_train_examples = list(teacher_train_examples)
                 if self.args.teacher_cl:
                     cur_memory_teacher_semi_examples = self.task_controller.get_semi_memory(memory_teacher_semi,
-                                                                                            int(self.args.st_rate * len(teacher_train_examples)))
+                                                                                            teacher_st_num)
                     cur_teacher_train_examples.extend(cur_memory_teacher_semi_examples)
 
                 loss = self.train_one_epoch(cur_teacher_train_examples,
@@ -100,13 +101,13 @@ class SFNet(BasicTrainer):
 
                 with torch.no_grad():
                     cur_teacher_semi_examples = self.task_controller.get_semi_memory(self.task_controller.task_list[i]["semi"],
-                                                                                     int(self.args.st_rate * len(teacher_train_examples)))
+                                                                                     teacher_st_num)
                     cur_teacher_semi_examples = [x for x in self.predict_pseudo_labels(cur_teacher_semi_examples, self.teacher) if x.pseudo_conf > 0]
                     cur_teacher_train_examples.extend(cur_teacher_semi_examples)
 
                 if self.args.teacher_cl:
                     cur_memory_teacher_semi_examples = self.task_controller.get_semi_memory(memory_teacher_semi,
-                                                                                            int(self.args.st_rate * len(teacher_train_examples)))
+                                                                                            teacher_st_num)
                     cur_teacher_train_examples.extend(cur_memory_teacher_semi_examples)
 
                 loss = self.train_one_epoch(cur_teacher_train_examples,
@@ -134,17 +135,21 @@ class SFNet(BasicTrainer):
                                                                                                    self.teacher) if x.pseudo_conf > 0]
                 self.task_controller.build_memory(i, self.teacher)
 
+            student_train_examples = list(self.task_controller.task_list[i]["train"])
+            if self.args.student_cl:
+                student_train_examples.extend(memory_student_train)
+            student_st_num = int(self.args.st_rate * len(student_train_examples))
+
             patience = 0
             for epoch in tqdm.tqdm(range(self.args.epoch_num), desc=f'Task {i} ### student episodic memory replay', leave=False):
-                cur_student_train_examples = list(self.task_controller.task_list[i]["train"])
+                cur_student_train_examples = list(student_train_examples)
                 if self.args.student_cl:
-                    cur_student_train_examples.extend(memory_student_train)
                     cur_memory_student_semi_examples = self.task_controller.get_semi_memory(memory_student_semi,
-                                                                                            int(self.args.st_rate * len(cur_student_train_examples)))
+                                                                                            student_st_num)
                     cur_student_train_examples.extend(cur_memory_student_semi_examples)
 
                 cur_student_semi_examples = self.task_controller.get_semi_memory(self.task_controller.task_list[i]["semi"],
-                                                                                 int(self.args.st_rate * len(cur_student_train_examples)))
+                                                                                 student_st_num)
                 cur_student_train_examples.extend(cur_student_semi_examples)
 
                 loss = self.train_one_epoch(cur_student_train_examples,
