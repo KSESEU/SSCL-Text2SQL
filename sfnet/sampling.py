@@ -342,12 +342,12 @@ def prompt_sampling(examples, target_examples, memory_size, args, model=None):
     return sampled_examples
 
 def get_similar_examples(candidate_examples, task_examples, func, candidate_size, threshold=0.2):
-    score_list = [0.0 for i in range(len(candidate_examples))]
+    score_list = [-1000000.0 for i in range(len(candidate_examples))]
     for i, ce in enumerate(candidate_examples):
         for te in task_examples:
             score_list[i] = max(score_list[i], func(ce, te))
     example_score = sorted([[i, score] for i, score in enumerate(score_list)], key=lambda x:x[1], reverse=True)
-    idx_list = [x[0] for x in example_score[:min(candidate_size, len(example_score))] if x[1] >= threshold]
+    idx_list = [x[0] for x in example_score[:min(candidate_size, len(example_score))] if x[1] >= -threshold]
     return [candidate_examples[idx] for idx in idx_list]
 
 
@@ -358,13 +358,13 @@ def calc_dist_with_other(cur_example, other_examples, func):
     return sum_dist
 
 def dist_measure_sql(e1, e2):
-    return np.linalg.norm(np.array(e1.sql_wordbag_vec) - np.array(e2.sql_wordbag_vec))
+    return -np.linalg.norm(np.array(e1.sql_wordbag_vec) - np.array(e2.sql_wordbag_vec))
 
 def dist_measure_schema(e1, e2):
-    return np.linalg.norm(np.array(e1.schema_wordbag_vec) - np.array(e2.schema_wordbag_vec))
+    return -np.linalg.norm(np.array(e1.schema_wordbag_vec) - np.array(e2.schema_wordbag_vec))
 
 def dist_measure_sql_and_schema(e1, e2):
-    return dist_measure_sql(e1, e2) * dist_measure_schema(e1, e2)
+    return -dist_measure_sql(e1, e2) * dist_measure_schema(e1, e2)
 
 def get_cos_similar(v1, v2):
     num = float(np.dot(v1, v2))
